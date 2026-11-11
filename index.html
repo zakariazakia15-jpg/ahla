@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إنجاز | لوحة إدارة المهام والمشاريع</title>
+  
+  <!-- Google Fonts: Cairo -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            cairo: ['Cairo', 'sans-serif'],
+          },
+          colors: {
+            primary: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- SortableJS for smooth Drag and Drop (Mobile & Desktop) -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <!-- Chart.js for stats -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.03);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.4);
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.7);
+    }
+    .sortable-ghost {
+      opacity: 0.35;
+      transform: scale(0.98);
+      border: 2px dashed #6366f1 !important;
+    }
+    .sortable-chosen {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+  <!-- Header / Navigation -->
+  <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Logo & Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+          <i data-lucide="check-check" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight bg-gradient-to-l from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+            إنجاز
+          </h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">إدارة المهام والمشاريع الذكية</p>
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="flex-1 max-w-md hidden md:block">
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="ابحث عن مهمة، تصنيف، أو تفاصيل..." 
+            class="w-full pr-10 pl-4 py-2 text-sm bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-indigo-500 dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 rounded-xl outline-none transition text-slate-800 dark:text-slate-200"
+          >
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2">
+        <!-- New Task Button -->
+        <button 
+          onclick="openTaskModal()" 
+          class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-indigo-500/25 transition active:scale-95"
+        >
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>مهمة جديدة</span>
+        </button>
+
+        <!-- Stats Toggle Modal Button -->
+        <button 
+          onclick="toggleStatsModal()" 
+          title="الإحصائيات والتحليلات"
+          class="p-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-800 transition"
+        >
+          <i data-lucide="pie-chart" class="w-5 h-5"></i>
+        </button>
+
+        <!-- Dark Mode Toggle -->
+        <button 
+          id="darkModeToggle" 
+          onclick="toggleDarkMode()" 
+          title="تبديل المظهر"
+          class="p-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-800 transition"
+        >
+          <i data-lucide="moon" class="w-5 h-5 dark:hidden"></i>
+          <i data-lucide="sun" class="w-5 h-5 hidden dark:block text-amber-400"></i>
+        </button>
+
+        <!-- Reset / Preset Data -->
+        <button 
+          onclick="resetSampleData()" 
+          title="استعادة البيانات التجريبية"
+          class="p-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-800 transition hidden sm:block"
+        >
+          <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Mobile Search Bar (Visible on small screens) -->
+  <div class="md:hidden px-4 pt-3">
+    <div class="relative">
+      <i data-lucide="search" class="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+      <input 
+        type="text" 
+        id="mobileSearchInput" 
+        placeholder="ابحث عن مهمة..." 
+        class="w-full pr-10 pl-4 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none"
+      >
+    </div>
+  </div>
+
+  <!-- Quick Filter Pills & Summary Bar -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2 w-full flex flex-wrap items-center justify-between gap-3">
+    
+    <!-- Filter Pills -->
+    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full custom-scrollbar text-xs font-medium">
+      <span class="text-slate-400 ml-1">تصفية حسب الأولوية:</span>
+      <button onclick="setFilterPriority('all')" id="filter-all" class="filter-pill active px-3 py-1.5 rounded-lg bg-indigo-600 text-white transition">الكل</button>
+      <button onclick="setFilterPriority('عاجل')" id="filter-عاجل" class="filter-pill px-3 py-1.5 rounded-lg bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition">عاجل 🔴</button>
+      <button onclick="setFilterPriority('مهم')" id="filter-مهم" class="filter-pill px-3 py-1.5 rounded-lg bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition">مهم 🟡</button>
+      <button onclick="setFilterPriority('عادي')" id="filter-عادي" class="filter-pill px-3 py-1.5 rounded-lg bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition">عادي 🟢</button>
+    </div>
+
+    <!-- Quick Stats Metric Ribbon -->
+    <div class="flex items-center gap-4 text-xs font-medium text-slate-500 dark:text-slate-400">
+      <div class="flex items-center gap-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+        <span>إجمالي المهام: <strong id="totalTasksCount" class="text-slate-800 dark:text-white">0</strong></span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+        <span>نسبة الإنجاز: <strong id="completionRateText" class="text-emerald-600 dark:text-emerald-400">0%</strong></span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Main Kanban Board -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 overflow-x-auto custom-scrollbar">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 min-w-[300px] lg:min-w-0">
+      
+      <!-- Column 1: مهام جديدة / للمتابعة (To Do) -->
+      <div class="flex flex-col bg-slate-100/90 dark:bg-slate-900/60 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800/80 h-full min-h-[500px]">
+        <div class="flex items-center justify-between mb-3 px-1">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+            <h2 class="font-bold text-slate-800 dark:text-slate-100 text-sm">قائمة المهام</h2>
+            <span id="badge-todo" class="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-semibold">0</span>
+          </div>
+          <button onclick="openTaskModal('todo')" class="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div id="col-todo" class="task-column flex-1 flex flex-col gap-3 custom-scrollbar overflow-y-auto pr-1" data-status="todo">
+          <!-- Tasks injected via JS -->
+        </div>
+      </div>
+
+      <!-- Column 2: قيد التنفيذ (In Progress) -->
+      <div class="flex flex-col bg-slate-100/90 dark:bg-slate-900/60 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800/80 h-full min-h-[500px]">
+        <div class="flex items-center justify-between mb-3 px-1">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+            <h2 class="font-bold text-slate-800 dark:text-slate-100 text-sm">قيد التنفيذ</h2>
+            <span id="badge-inprogress" class="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 font-semibold">0</span>
+          </div>
+          <button onclick="openTaskModal('inprogress')" class="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div id="col-inprogress" class="task-column flex-1 flex flex-col gap-3 custom-scrollbar overflow-y-auto pr-1" data-status="inprogress">
+          <!-- Tasks injected via JS -->
+        </div>
+      </div>
+
+      <!-- Column 3: قيد المراجعة (In Review) -->
+      <div class="flex flex-col bg-slate-100/90 dark:bg-slate-900/60 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800/80 h-full min-h-[500px]">
+        <div class="flex items-center justify-between mb-3 px-1">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-purple-500"></span>
+            <h2 class="font-bold text-slate-800 dark:text-slate-100 text-sm">قيد المراجعة</h2>
+            <span id="badge-review" class="text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-semibold">0</span>
+          </div>
+          <button onclick="openTaskModal('review')" class="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div id="col-review" class="task-column flex-1 flex flex-col gap-3 custom-scrollbar overflow-y-auto pr-1" data-status="review">
+          <!-- Tasks injected via JS -->
+        </div>
+      </div>
+
+      <!-- Column 4: مكتملة (Done) -->
+      <div class="flex flex-col bg-slate-100/90 dark:bg-slate-900/60 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800/80 h-full min-h-[500px]">
+        <div class="flex items-center justify-between mb-3 px-1">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+            <h2 class="font-bold text-slate-800 dark:text-slate-100 text-sm">مكتملة</h2>
+            <span id="badge-done" class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-semibold">0</span>
+          </div>
+          <button onclick="openTaskModal('done')" class="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div id="col-done" class="task-column flex-1 flex flex-col gap-3 custom-scrollbar overflow-y-auto pr-1" data-status="done">
+          <!-- Tasks injected via JS -->
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Add / Edit Task Modal -->
+  <div id="taskModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+      <div class="flex items-center justify-between mb-5">
+        <h3 id="modalTitle" class="text-lg font-bold text-slate-900 dark:text-white">إضافة مهمة جديدة</h3>
+        <button onclick="closeTaskModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="taskForm" onsubmit="handleTaskSubmit(event)" class="space-y-4">
+        <input type="hidden" id="taskId">
+
+        <!-- Title -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">عنوان المهمة *</label>
+          <input 
+            type="text" 
+            id="taskTitle" 
+            required 
+            placeholder="مثال: تصميم الشعار الجديد"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+          >
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">الوصف والتفاصيل</label>
+          <textarea 
+            id="taskDescription" 
+            rows="3" 
+            placeholder="أضف وصفاً مختصراً أو روابط أو متطلبات..."
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
+          ></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Status Column -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">المرحلة</label>
+            <select 
+              id="taskStatus" 
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+            >
+              <option value="todo">قائمة المهام</option>
+              <option value="inprogress">قيد التنفيذ</option>
+              <option value="review">قيد المراجعة</option>
+              <option value="done">مكتملة</option>
+            </select>
+          </div>
+
+          <!-- Priority -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">مستوى الأولوية</label>
+            <select 
+              id="taskPriority" 
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+            >
+              <option value="عاجل">عاجل 🔴</option>
+              <option value="مهم" selected>مهم 🟡</option>
+              <option value="عادي">عادي 🟢</option>
+              <option value="منخفض">منخفض ⚪</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Category / Tag -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">التصنيف</label>
+            <input 
+              type="text" 
+              id="taskTag" 
+              placeholder="مثال: تصميم، برمجة، تسويق"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+            >
+          </div>
+
+          <!-- Due Date -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">تاريخ الاستحقاق</label>
+            <input 
+              type="date" 
+              id="taskDueDate" 
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+            >
+          </div>
+        </div>
+
+        <!-- Submit and Cancel Buttons -->
+        <div class="flex items-center justify-end gap-3 pt-3">
+          <button 
+            type="button" 
+            onclick="closeTaskModal()" 
+            class="px-4 py-2.5 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+          >
+            إلغاء
+          </button>
+          <button 
+            type="submit" 
+            class="px-5 py-2.5 text-sm font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/20 transition active:scale-95"
+          >
+            حفظ المهمة
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Stats & Analytics Modal -->
+  <div id="statsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-2">
+          <i data-lucide="bar-chart-2" class="w-5 h-5 text-indigo-600"></i>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">إحصائيات الإنجاز والإنتاجية</h3>
+        </div>
+        <button onclick="toggleStatsModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 text-center">
+        <div class="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-800">
+          <span class="text-xs text-slate-400 block mb-1">المهام الكلية</span>
+          <span id="stat-total" class="text-xl font-bold text-slate-800 dark:text-white">0</span>
+        </div>
+        <div class="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-800">
+          <span class="text-xs text-slate-400 block mb-1">قيد التنفيذ</span>
+          <span id="stat-inprogress" class="text-xl font-bold text-amber-500">0</span>
+        </div>
+        <div class="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-800">
+          <span class="text-xs text-slate-400 block mb-1">مكتملة</span>
+          <span id="stat-done" class="text-xl font-bold text-emerald-500">0</span>
+        </div>
+        <div class="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-800">
+          <span class="text-xs text-slate-400 block mb-1">نسبة الإنجاز</span>
+          <span id="stat-rate" class="text-xl font-bold text-indigo-600">0%</span>
+        </div>
+      </div>
+
+      <!-- Chart Container -->
+      <div class="h-64 flex items-center justify-center">
+        <canvas id="tasksChart"></canvas>
+      </div>
+
+      <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+        <button onclick="toggleStatsModal()" class="px-5 py-2 text-sm font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+          إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 dark:border-slate-800/60 py-3 text-center text-xs text-slate-500 dark:text-slate-500">
+    <span>تطبيق إنجاز لإدارة المشاريع والمهام &bull; تم التطوير بواسطة Antigravity</span>
+  </footer>
+
+  <!-- Application Logic -->
+  <script>
+    // Sample initial data in Arabic
+    const SAMPLE_TASKS = [
+      {
+        id: "task-1",
+        title: "تصميم واجهة المستخدم الرئيسية للمتجر",
+        description: "إنشاء نماذج Figma أولية متجاوبة مع الأجهزة الذكية وتحديد لوحة الألوان الأساسية.",
+        status: "inprogress",
+        priority: "عاجل",
+        tag: "تصميم",
+        dueDate: "2026-11-15",
+        createdAt: Date.now() - 3600000 * 24
+      },
+      {
+        id: "task-2",
+        title: "ربط بوابة الدفع الإلكتروني",
+        description: "تكامل Stripe و Apple Pay مع اختبار المعاملات الوهمية والتحقق من Webhooks.",
+        status: "todo",
+        priority: "عاجل",
+        tag: "برمجة",
+        dueDate: "2026-11-20",
+        createdAt: Date.now() - 3600000 * 48
+      },
+      {
+        id: "task-3",
+        title: "إعداد حملة التسويق عبر وسائل التواصل",
+        description: "كتابة نصوص الإعلانات وتجهيز الصور الترويجية للمنصات الرقمية.",
+        status: "todo",
+        priority: "مهم",
+        tag: "تسويق",
+        dueDate: "2026-11-25",
+        createdAt: Date.now() - 3600000 * 12
+      },
+      {
+        id: "task-4",
+        title: "مراجعة كود الأمان والحماية",
+        description: "فحص الثغرات المحتملة وتحديث الحزم البرمجية إلى أحدث إصدار مستقر.",
+        status: "review",
+        priority: "مهم",
+        tag: "أمان",
+        dueDate: "2026-11-14",
+        createdAt: Date.now() - 3600000 * 72
+      },
+      {
+        id: "task-5",
+        title: "تهيئة خادم الإنتاج وقواعد البيانات",
+        description: "تجهيز استضافة سحابية وتفعيل النسخ الاحتياطي التلقائي اليومي.",
+        status: "done",
+        priority: "عادي",
+        tag: "سيرفرات",
+        dueDate: "2026-11-10",
+        createdAt: Date.now() - 3600000 * 96
+      },
+      {
+        id: "task-6",
+        title: "توثيق واجهة برمجة التطبيقات (API Docs)",
+        description: "كتابة شرح تفصيلي لجميع النقاط الطرفية وتسهيل استخدامها للمطورين.",
+        status: "done",
+        priority: "منخفض",
+        tag: "توثيق",
+        dueDate: "2026-11-09",
+        createdAt: Date.now() - 3600000 * 120
+      }
+    ];
+
+    // State
+    let tasks = [];
+    let currentFilterPriority = 'all';
+    let searchQuery = '';
+    let sortableInstances = [];
+    let statsChartInstance = null;
+
+    // Load tasks from LocalStorage or initialize with sample
+    function loadTasks() {
+      const stored = localStorage.getItem('enjaz_tasks');
+      if (stored) {
+        try {
+          tasks = JSON.parse(stored);
+        } catch (e) {
+          tasks = [...SAMPLE_TASKS];
+        }
+      } else {
+        tasks = [...SAMPLE_TASKS];
+        saveTasks();
+      }
+    }
+
+    function saveTasks() {
+      localStorage.setItem('enjaz_tasks', JSON.stringify(tasks));
+      renderBoard();
+      updateMetrics();
+    }
+
+    function resetSampleData() {
+      if (confirm('هل ترغب في استعادة البيانات التجريبية الأولية؟')) {
+        tasks = JSON.parse(JSON.stringify(SAMPLE_TASKS));
+        saveTasks();
+      }
+    }
+
+    // Render cards to columns
+    function renderBoard() {
+      const columns = {
+        todo: document.getElementById('col-todo'),
+        inprogress: document.getElementById('col-inprogress'),
+        review: document.getElementById('col-review'),
+        done: document.getElementById('col-done')
+      };
+
+      // Clear columns
+      Object.values(columns).forEach(col => col.innerHTML = '');
+
+      // Counters
+      const counts = { todo: 0, inprogress: 0, review: 0, done: 0 };
+
+      // Filter tasks
+      const filtered = tasks.filter(task => {
+        // Priority filter
+        if (currentFilterPriority !== 'all' && task.priority !== currentFilterPriority) {
+          return false;
+        }
+        // Search query
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          const matchTitle = (task.title || '').toLowerCase().includes(q);
+          const matchDesc = (task.description || '').toLowerCase().includes(q);
+          const matchTag = (task.tag || '').toLowerCase().includes(q);
+          if (!matchTitle && !matchDesc && !matchTag) return false;
+        }
+        return true;
+      });
+
+      filtered.forEach(task => {
+        const col = columns[task.status] || columns.todo;
+        counts[task.status] = (counts[task.status] || 0) + 1;
+        col.appendChild(createTaskCardElement(task));
+      });
+
+      // Update badge counters
+      document.getElementById('badge-todo').innerText = counts.todo || 0;
+      document.getElementById('badge-inprogress').innerText = counts.inprogress || 0;
+      document.getElementById('badge-review').innerText = counts.review || 0;
+      document.getElementById('badge-done').innerText = counts.done || 0;
+
+      // Show empty placeholder if empty
+      Object.keys(columns).forEach(status => {
+        if (columns[status].children.length === 0) {
+          columns[status].innerHTML = `
+            <div class="h-32 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center text-slate-400 text-xs">
+              <i data-lucide="inbox" class="w-6 h-6 mb-1 opacity-60"></i>
+              <span>لا توجد مهام حالياً</span>
+            </div>
+          `;
+        }
+      });
+
+      // Refresh lucide icons
+      lucide.createIcons();
+    }
+
+    // Helper: Priority color styles
+    function getPriorityBadge(priority) {
+      switch (priority) {
+        case 'عاجل':
+          return `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900">عاجل 🔴</span>`;
+        case 'مهم':
+          return `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900">مهم 🟡</span>`;
+        case 'عادي':
+          return `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900">عادي 🟢</span>`;
+        default:
+          return `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">منخفض ⚪</span>`;
+      }
+    }
+
+    // Create single card DOM element
+    function createTaskCardElement(task) {
+      const card = document.createElement('div');
+      card.className = "task-card bg-white dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700/80 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-150 cursor-grab active:cursor-grabbing group relative select-none";
+      card.dataset.id = task.id;
+
+      const isCompleted = task.status === 'done';
+
+      card.innerHTML = `
+        <div class="flex items-start justify-between gap-2 mb-2">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            ${getPriorityBadge(task.priority)}
+            ${task.tag ? `<span class="px-2 py-0.5 rounded-md text-[11px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium">#${task.tag}</span>` : ''}
+          </div>
+          <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+            <button onclick="editTask('${task.id}')" title="تعديل" class="p-1 hover:text-indigo-600 dark:hover:text-indigo-400 text-slate-400 transition">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="deleteTask('${task.id}')" title="حذف" class="p-1 hover:text-rose-600 dark:hover:text-rose-400 text-slate-400 transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+        <h4 class="font-semibold text-sm text-slate-800 dark:text-slate-100 mb-1.5 leading-snug ${isCompleted ? 'line-through text-slate-400 dark:text-slate-500' : ''}">
+          ${task.title}
+        </h4>
+
+        ${task.description ? `
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2 leading-relaxed">
+            ${task.description}
+          </p>
+        ` : ''}
+
+        <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700/50 text-[11px] text-slate-400 dark:text-slate-500">
+          <div class="flex items-center gap-1">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+            <span>${task.dueDate || 'بدون موعد'}</span>
+          </div>
+          ${isCompleted ? `
+            <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+              <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+              منجز
+            </span>
+          ` : `
+            <button onclick="quickMoveToDone('${task.id}')" title="تحديد كمكتمل" class="hover:text-emerald-500 flex items-center gap-1 transition">
+              <i data-lucide="circle" class="w-3.5 h-3.5"></i>
+              <span>إكمال</span>
+            </button>
+          `}
+        </div>
+      `;
+
+      return card;
+    }
+
+    // Drag and Drop Initialization via SortableJS
+    function initDragAndDrop() {
+      const columns = document.querySelectorAll('.task-column');
+      sortableInstances.forEach(inst => inst.destroy());
+      sortableInstances = [];
+
+      columns.forEach(col => {
+        const sortable = new Sortable(col, {
+          group: 'kanban-board',
+          animation: 200,
+          ghostClass: 'sortable-ghost',
+          chosenClass: 'sortable-chosen',
+          delay: 50,
+          delayOnTouchOnly: true,
+          onEnd: function (evt) {
+            const taskId = evt.item.dataset.id;
+            const newStatus = evt.to.dataset.status;
+            const oldStatus = evt.from.dataset.status;
+
+            if (taskId && newStatus) {
+              const taskIndex = tasks.findIndex(t => t.id === taskId);
+              if (taskIndex > -1) {
+                const wasNotDone = tasks[taskIndex].status !== 'done';
+                tasks[taskIndex].status = newStatus;
+                
+                // Trigger confetti celebration when task moved into done!
+                if (newStatus === 'done' && wasNotDone) {
+                  fireCelebration();
+                }
+
+                saveTasks();
+              }
+            }
+          }
+        });
+        sortableInstances.push(sortable);
+      });
+    }
+
+    // Celebration Confetti
+    function fireCelebration() {
+      try {
+        confetti({
+          particleCount: 70,
+          spread: 60,
+          origin: { y: 0.7 }
+        });
+      } catch (e) {
+        console.log('Confetti effect');
+      }
+    }
+
+    // Quick move to done
+    function quickMoveToDone(id) {
+      const task = tasks.find(t => t.id === id);
+      if (task) {
+        task.status = 'done';
+        fireCelebration();
+        saveTasks();
+      }
+    }
+
+    // Task Modal Management
+    function openTaskModal(preselectedStatus = 'todo') {
+      const modal = document.getElementById('taskModal');
+      document.getElementById('taskForm').reset();
+      document.getElementById('taskId').value = '';
+      document.getElementById('modalTitle').innerText = 'إضافة مهمة جديدة';
+      document.getElementById('taskStatus').value = preselectedStatus;
+      document.getElementById('taskPriority').value = 'مهم';
+
+      modal.classList.remove('hidden');
+      setTimeout(() => modal.classList.remove('opacity-0'), 10);
+      document.getElementById('taskTitle').focus();
+    }
+
+    function editTask(id) {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      const modal = document.getElementById('taskModal');
+      document.getElementById('taskId').value = task.id;
+      document.getElementById('taskTitle').value = task.title;
+      document.getElementById('taskDescription').value = task.description || '';
+      document.getElementById('taskStatus').value = task.status;
+      document.getElementById('taskPriority').value = task.priority;
+      document.getElementById('taskTag').value = task.tag || '';
+      document.getElementById('taskDueDate').value = task.dueDate || '';
+      document.getElementById('modalTitle').innerText = 'تعديل المهمة';
+
+      modal.classList.remove('hidden');
+      setTimeout(() => modal.classList.remove('opacity-0'), 10);
+    }
+
+    function closeTaskModal() {
+      const modal = document.getElementById('taskModal');
+      modal.classList.add('opacity-0');
+      setTimeout(() => modal.classList.add('hidden'), 200);
+    }
+
+    function handleTaskSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('taskId').value;
+      const title = document.getElementById('taskTitle').value.trim();
+      const description = document.getElementById('taskDescription').value.trim();
+      const status = document.getElementById('taskStatus').value;
+      const priority = document.getElementById('taskPriority').value;
+      const tag = document.getElementById('taskTag').value.trim();
+      const dueDate = document.getElementById('taskDueDate').value;
+
+      if (!title) return;
+
+      if (id) {
+        // Edit existing
+        const task = tasks.find(t => t.id === id);
+        if (task) {
+          task.title = title;
+          task.description = description;
+          task.status = status;
+          task.priority = priority;
+          task.tag = tag;
+          task.dueDate = dueDate;
+        }
+      } else {
+        // Create new
+        const newTask = {
+          id: 'task-' + Date.now(),
+          title,
+          description,
+          status,
+          priority,
+          tag,
+          dueDate,
+          createdAt: Date.now()
+        };
+        tasks.unshift(newTask);
+      }
+
+      closeTaskModal();
+      saveTasks();
+    }
+
+    function deleteTask(id) {
+      if (confirm('هل أنت متأكد من حذف هذه المهمة؟')) {
+        tasks = tasks.filter(t => t.id !== id);
+        saveTasks();
+      }
+    }
+
+    // Filter by priority
+    function setFilterPriority(priority) {
+      currentFilterPriority = priority;
+      document.querySelectorAll('.filter-pill').forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        btn.classList.add('bg-slate-200/70', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
+      });
+
+      const activeBtn = document.getElementById(`filter-${priority}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-indigo-600', 'text-white');
+        activeBtn.classList.remove('bg-slate-200/70', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
+      }
+
+      renderBoard();
+    }
+
+    // Search Handlers
+    function setupSearch() {
+      const desktopSearch = document.getElementById('searchInput');
+      const mobileSearch = document.getElementById('mobileSearchInput');
+
+      const handleSearch = (e) => {
+        searchQuery = e.target.value;
+        if (desktopSearch) desktopSearch.value = searchQuery;
+        if (mobileSearch) mobileSearch.value = searchQuery;
+        renderBoard();
+      };
+
+      if (desktopSearch) desktopSearch.addEventListener('input', handleSearch);
+      if (mobileSearch) mobileSearch.addEventListener('input', handleSearch);
+    }
+
+    // Metrics & Analytics
+    function updateMetrics() {
+      const total = tasks.length;
+      const done = tasks.filter(t => t.status === 'done').length;
+      const inprogress = tasks.filter(t => t.status === 'inprogress').length;
+      const rate = total > 0 ? Math.round((done / total) * 100) : 0;
+
+      document.getElementById('totalTasksCount').innerText = total;
+      document.getElementById('completionRateText').innerText = `${rate}%`;
+
+      document.getElementById('stat-total').innerText = total;
+      document.getElementById('stat-inprogress').innerText = inprogress;
+      document.getElementById('stat-done').innerText = done;
+      document.getElementById('stat-rate').innerText = `${rate}%`;
+
+      updateChart();
+    }
+
+    function toggleStatsModal() {
+      const modal = document.getElementById('statsModal');
+      if (modal.classList.contains('hidden')) {
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        updateChart();
+      } else {
+        modal.classList.add('opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 200);
+      }
+    }
+
+    function updateChart() {
+      const ctx = document.getElementById('tasksChart');
+      if (!ctx) return;
+
+      const todoCount = tasks.filter(t => t.status === 'todo').length;
+      const inprogCount = tasks.filter(t => t.status === 'inprogress').length;
+      const reviewCount = tasks.filter(t => t.status === 'review').length;
+      const doneCount = tasks.filter(t => t.status === 'done').length;
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const textColor = isDark ? '#e2e8f0' : '#475569';
+
+      if (statsChartInstance) {
+        statsChartInstance.destroy();
+      }
+
+      statsChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['قائمة المهام', 'قيد التنفيذ', 'قيد المراجعة', 'مكتملة'],
+          datasets: [{
+            data: [todoCount, inprogCount, reviewCount, doneCount],
+            backgroundColor: [
+              '#3b82f6', // blue
+              '#f59e0b', // amber
+              '#a855f7', // purple
+              '#10b981'  // emerald
+            ],
+            borderWidth: 2,
+            borderColor: isDark ? '#0f172a' : '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                font: { family: 'Cairo', size: 12 },
+                color: textColor,
+                padding: 16
+              }
+            }
+          },
+          cutout: '65%'
+        }
+      });
+    }
+
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+      const html = document.documentElement;
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        localStorage.setItem('enjaz_theme', 'light');
+      } else {
+        html.classList.add('dark');
+        localStorage.setItem('enjaz_theme', 'dark');
+      }
+      updateChart();
+    }
+
+    function initTheme() {
+      const saved = localStorage.getItem('enjaz_theme');
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+
+    // Initialization on DOM Ready
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      loadTasks();
+      initDragAndDrop();
+      setupSearch();
+      renderBoard();
+      updateMetrics();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
